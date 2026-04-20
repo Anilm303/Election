@@ -81,7 +81,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "evoting.wsgi.application"
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL_NON_POOLING")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("POSTGRES_PRISMA_URL")
+)
 
 if DATABASE_URL:
     DATABASES = {
