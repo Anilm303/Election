@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Vote | {{ election.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-soft p-4">
+      <h1 class="h4 mb-1">{{ election.title }}</h1>
+      <p class="text-muted">Choose one candidate and submit your vote.</p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit Vote</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-link">Back</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
