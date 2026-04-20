@@ -1,13 +1,13 @@
 import os
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "evoting.settings")
+
 import django
 from django.core.management import call_command
 from django.core.wsgi import get_wsgi_application
 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "evoting.settings")
-
-if os.getenv("VERCEL") and not os.getenv("DATABASE_URL"):
+if not os.getenv("DATABASE_URL"):
 	django.setup()
 	call_command("migrate", interactive=False, run_syncdb=True, verbosity=0)
 
