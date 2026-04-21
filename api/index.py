@@ -16,15 +16,16 @@ if os.getenv("VERCEL"):
 		importlib.import_module("voting.migrations.0002_alter_customuser_managers_and_more")
 		importlib.import_module("voting.migrations.0003_auditlog_captchalog_notificationlog_otpverification_and_more")
 		importlib.import_module("voting.migrations.0004_alter_votelog_activity_type_alter_votelog_election")
-		importlib.import_module("voting.migrations.0005_election_allow_voting")
-	except ImportError:
-		pass
+	except ImportError as e:
+		print(f"Import error: {e}")
 	
 	# Run migrations on connected database
 	try:
-		call_command("migrate", interactive=False, verbosity=1)
+		print("[MIGRATION] Running Django migrations...")
+		call_command("migrate", interactive=False, verbosity=2)
+		print("[MIGRATION] Migrations completed successfully")
 	except Exception as e:
-		print(f"Migration error: {e}")
+		print(f"[MIGRATION ERROR] {e}")
 		import traceback
 		traceback.print_exc()
 
