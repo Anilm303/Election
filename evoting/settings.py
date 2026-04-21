@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import shutil
+import tempfile
 
 import dj_database_url
 
@@ -96,8 +97,8 @@ if DATABASE_URL:
 else:
     sqlite_name = BASE_DIR / "db.sqlite3"
     if os.getenv("VERCEL"):
-        # Vercel serverless filesystem is read-only except /tmp.
-        sqlite_name = Path("/tmp/db.sqlite3")
+        # Use OS temp dir (Vercel: /tmp) because deployment filesystem is read-only.
+        sqlite_name = Path(tempfile.gettempdir()) / "db.sqlite3"
         source_sqlite = BASE_DIR / "db.sqlite3"
         if source_sqlite.exists() and not sqlite_name.exists():
             try:
