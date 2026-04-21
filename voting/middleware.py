@@ -7,6 +7,8 @@ from django.core.management import call_command
 
 _SCHEMA_BOOTSTRAPPED = False
 _SCHEMA_BOOTSTRAP_LOCK = threading.Lock()
+_SUPERUSER_SYNCED = False
+_SUPERUSER_SYNC_LOCK = threading.Lock()
 
 
 def _is_vercel_sqlite_fallback() -> bool:
@@ -26,8 +28,18 @@ def _ensure_schema_bootstrapped() -> None:
         if _SCHEMA_BOOTSTRAPPED:
             return
         call_command("migrate", interactive=False, verbosity=0, run_syncdb=True)
-        _ensure_superuser_from_env()
         _SCHEMA_BOOTSTRAPPED = True
+
+
+def _ensure_superuser_synced_once() -> None:
+    global _SUPERUSER_SYNCED
+    if _SUPERUSER_SYNCED:
+        return
+    with _SUPERUSER_SYNC_LOCK:
+        if _SUPERUSER_SYNCED:
+            return
+        _ensure_superuser_from_env()
+        _SUPERUSER_SYNCED = True
 
 
 def _ensure_superuser_from_env() -> None:
@@ -74,6 +86,8 @@ class EnsureSchemaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if os.getenv("VERCEL"):
+            _ensure_superuser_synced_once()
         if _is_vercel_sqlite_fallback():
             _ensure_schema_bootstrapped()
         return self.get_response(request)
