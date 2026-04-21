@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.management import call_command
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import IntegrityError, OperationalError, transaction
+from django.db import IntegrityError, OperationalError, ProgrammingError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -97,6 +97,7 @@ def get_user_ip(request):
 def home(request):
     """Home page with upcoming elections - public for all users"""
     now = timezone.now()
+    elections = Election.objects.none()
     try:
         _ensure_election_schema()
     except Exception:
@@ -104,10 +105,17 @@ def home(request):
         pass
     try:
         elections = Election.objects.filter(is_active=True, end_time__gte=now)
-    except OperationalError as exc:
+    except (OperationalError, ProgrammingError) as exc:
         if not _ensure_sqlite_schema_for_vercel_fallback(exc):
-            raise
-        elections = Election.objects.filter(is_active=True, end_time__gte=now)
+            try:
+                elections = Election.objects.filter(is_active=True, end_time__gte=now)
+            except (OperationalError, ProgrammingError):
+                elections = Election.objects.none()
+        else:
+            try:
+                elections = Election.objects.filter(is_active=True, end_time__gte=now)
+            except (OperationalError, ProgrammingError):
+                elections = Election.objects.none()
     
     context = {
         'elections': elections,
