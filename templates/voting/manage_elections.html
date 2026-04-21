@@ -43,7 +43,7 @@
                                     <span class="badge bg-secondary">Inactive</span>
                                 {% endif %}
                             </td>
-                            <td>{{ election.votes.count }}</td>
+                            <td>{{ election.vote_count }}</td>
                             <td>
                                 <a href="{% url 'manage_candidates' election.id %}" class="btn btn-sm btn-info">Candidates</a>
                                 <a href="{% url 'results' election.id %}" class="btn btn-sm btn-success">Results</a>

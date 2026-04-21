@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import IntegrityError, OperationalError, ProgrammingError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import Http404
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.http import require_POST
@@ -299,13 +300,9 @@ def verify_2fa(request):
 @login_required
 def dashboard(request):
     """User dashboard"""
-    now = timezone.now()
-    try:
-        elections = Election.objects.filter(is_active=True, end_time__gte=now)
-    except OperationalError as exc:
-        if not _ensure_sqlite_schema_for_vercel_fallback(exc):
-            raise
-        elections = Election.objects.filter(is_active=True, end_time__gte=now)
+    elections = list(
+        Election.objects.values("id", "title", "description").order_by("-id")
+    )
     
     voted_election_ids = set(
         Vote.objects.filter(user=request.user).values_list("election_id", flat=True)
@@ -570,7 +567,15 @@ def admin_dashboard(request):
     total_users = CustomUser.objects.count()
     verified_voters = VoterProfile.objects.filter(verification_status='verified').count()
     
-    recent_votes = Vote.objects.select_related('user', 'election', 'candidate').order_by('-voted_at')[:10]
+    recent_votes = list(
+        Vote.objects.values(
+            'user__username',
+            'election_id',
+            'election__title',
+            'candidate__name',
+            'voted_at',
+        ).order_by('-voted_at')[:10]
+    )
     recent_logs = VoteLog.objects.order_by('-timestamp')[:10]
     
     context = {
@@ -589,7 +594,11 @@ def admin_dashboard(request):
 @user_passes_test(is_admin)
 def manage_elections(request):
     """Manage elections"""
-    elections = Election.objects.all()
+    elections = list(
+        Election.objects.annotate(vote_count=Count("votes")).values(
+            "id", "title", "description", "vote_count"
+        ).order_by("-id")
+    )
     return render(request, "voting/manage_elections.html", {"elections": elections})
 
 
@@ -632,8 +641,10 @@ def create_election(request):
 @user_passes_test(is_admin)
 def manage_candidates(request, election_id):
     """Manage candidates for an election"""
-    election = get_object_or_404(Election, id=election_id)
-    candidates = election.candidates.all()
+    election = Election.objects.filter(id=election_id).values("id", "title").first()
+    if not election:
+        raise Http404("Election not found")
+    candidates = Candidate.objects.filter(election_id=election_id).order_by("position", "name")
     return render(request, "voting/manage_candidates.html", {
         "election": election,
         "candidates": candidates

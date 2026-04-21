@@ -83,9 +83,9 @@
                         <tbody>
                             {% for vote in recent_votes %}
                                 <tr>
-                                    <td>{{ vote.user.username }}</td>
-                                    <td>{{ vote.election.title }}</td>
-                                    <td>{{ vote.candidate.name }}</td>
+                                    <td>{{ vote.user__username }}</td>
+                                    <td>{{ vote.election__title }}</td>
+                                    <td>{{ vote.candidate__name }}</td>
                                     <td>{{ vote.voted_at|timesince }} ago</td>
                                 </tr>
                             {% empty %}
