@@ -96,26 +96,12 @@ def get_user_ip(request):
 
 def home(request):
     """Home page with upcoming elections - public for all users"""
-    now = timezone.now()
-    elections = Election.objects.none()
     try:
-        _ensure_election_schema()
-    except Exception:
-        # If the column still cannot be created, fall back to the existing query path.
-        pass
-    try:
-        elections = Election.objects.filter(is_active=True, end_time__gte=now)
-    except (OperationalError, ProgrammingError) as exc:
-        if not _ensure_sqlite_schema_for_vercel_fallback(exc):
-            try:
-                elections = Election.objects.filter(is_active=True, end_time__gte=now)
-            except (OperationalError, ProgrammingError):
-                elections = Election.objects.none()
-        else:
-            try:
-                elections = Election.objects.filter(is_active=True, end_time__gte=now)
-            except (OperationalError, ProgrammingError):
-                elections = Election.objects.none()
+        elections = list(
+            Election.objects.values("id", "title", "description").order_by("-id")
+        )
+    except (OperationalError, ProgrammingError):
+        elections = []
     
     context = {
         'elections': elections,
