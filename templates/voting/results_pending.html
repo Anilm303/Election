@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Results Pending - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="alert alert-info" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-hourglass-split"></i>
+                    Results Not Yet Published
+                </h4>
+                <p>
+                    The results for <strong>{{ election.title }}</strong> are not yet available to the public.
+                </p>
+                <p class="mb-0">
+                    Results will be published after the voting period ends and has been verified by election officials.
+                </p>
+            </div>
+
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Election Details</h5>
+                    <p class="card-text">
+                        <strong>Voting Period:</strong><br>
+                        {{ election.start_time|date:"Y-m-d H:i" }} to {{ election.end_time|date:"Y-m-d H:i" }}
+                    </p>
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1 class="h2 mb-4">Account Settings</h1>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Security Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Security</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Email Verification:</strong></p>
+                            {% if email_verified %}
+                                <span class="badge bg-success">Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning">Not Verified</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>2FA Status:</strong></p>
+                            {% if two_fa_enabled %}
+                                <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                                <span class="badge bg-danger">Disabled</span>
+                                <a href="{% url 'setup_2fa' %}" class="btn btn-sm btn-primary mt-2">Enable 2FA</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Preference -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Language Preference</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            {% if field.label %}
+                                <div class="mb-3">
+                                    {{ field }}
+                                    <p class="form-text text-muted">
+                                        <small>Select your preferred language for the e-voting system</small>
+                                    </p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-primary">Save Preferences</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

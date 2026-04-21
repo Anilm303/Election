@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Setup 2FA - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">Setup Two-Factor Authentication</h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">
+                        Two-factor authentication adds an extra layer of security to your account.
+                    </p>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="id_enable_2fa" name="enable_2fa">
+                                <label class="form-check-label" for="id_enable_2fa">
+                                    Enable Two-Factor Authentication
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                You'll need to verify your identity using an authenticator app on your mobile device.
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">Continue</button>
+                    </form>
+
+                    <hr>
+                    
+                    <p class="text-center">
+                        <a href="{% url 'dashboard' %}">Skip for now</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

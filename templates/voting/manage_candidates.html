@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Candidates - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h2">Candidates for {{ election.title }}</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'add_candidate' election.id %}" class="btn btn-primary">Add Candidate</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Party</th>
+                        <th>Symbol</th>
+                        <th>Votes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for candidate in candidates %}
+                        <tr>
+                            <td>
+                                {% if candidate.photo %}
+                                    <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}" style="max-height: 50px; border-radius: 5px;">
+                                {% elif candidate.photo_url %}
+                                    <img src="{{ candidate.photo_url }}" alt="{{ candidate.name }}" style="max-height: 50px; border-radius: 5px;">
+                                {% else %}
+                                    <div class="bg-light" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 5px;">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ candidate.name }}</strong>
+                                {% if candidate.is_independent %}<br><small class="badge bg-secondary">Independent</small>{% endif %}
+                            </td>
+                            <td>{{ candidate.party|default:"Independent" }}</td>
+                            <td>{{ candidate.symbol|default:"—" }}</td>
+                            <td><span class="badge bg-success">{{ candidate.votes.count }}</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No candidates added yet. <a href="{% url 'add_candidate' election.id %}">Add one</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

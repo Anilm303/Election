@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Elections - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h2">Manage Elections</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'create_election' %}" class="btn btn-primary">Create New Election</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Votes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for election in elections %}
+                        <tr>
+                            <td>
+                                <strong>{{ election.title }}</strong>
+                                <br><small class="text-muted">{{ election.description|truncatewords:10 }}</small>
+                            </td>
+                            <td>{{ election.start_time|date:"Y-m-d H:i" }}</td>
+                            <td>{{ election.end_time|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                {% if election.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ election.votes.count }}</td>
+                            <td>
+                                <a href="{% url 'manage_candidates' election.id %}" class="btn btn-sm btn-info">Candidates</a>
+                                <a href="{% url 'results' election.id %}" class="btn btn-sm btn-success">Results</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No elections found. <a href="{% url 'create_election' %}">Create one</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

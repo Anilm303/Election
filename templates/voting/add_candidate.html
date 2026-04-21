@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Add Candidate - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Add Candidate for {{ election.title }}</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_name" class="form-label">Candidate Name *</label>
+                                    <input type="text" class="form-control" id="id_name" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="id_email" name="email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_phone" class="form-label">Phone</label>
+                                    <input type="text" class="form-control" id="id_phone" name="phone">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_party" class="form-label">Political Party</label>
+                                    <input type="text" class="form-control" id="id_party" name="party">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_symbol" class="form-label">Party Symbol</label>
+                                    <input type="text" class="form-control" id="id_symbol" name="symbol">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_position" class="form-label">Display Position</label>
+                                    <input type="number" class="form-control" id="id_position" name="position" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_biography" class="form-label">Biography</label>
+                            <textarea class="form-control" id="id_biography" name="biography" rows="4"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_manifesto" class="form-label">Manifesto/Platform</label>
+                            <textarea class="form-control" id="id_manifesto" name="manifesto" rows="4"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_photo" class="form-label">Photo</label>
+                            <input type="file" class="form-control" id="id_photo" name="photo" accept="image/*">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_photo_url" class="form-label">Photo URL (if no file)</label>
+                            <input type="url" class="form-control" id="id_photo_url" name="photo_url">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="id_is_independent" name="is_independent">
+                                <label class="form-check-label" for="id_is_independent">
+                                    Independent Candidate
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">Add Candidate</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

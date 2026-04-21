@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vote History - E-Voting System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1 class="h2 mb-4">Your Voting History</h1>
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Activity</th>
+                                <th>Election</th>
+                                <th>Description</th>
+                                <th>IP Address</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in vote_history %}
+                                <tr>
+                                    <td>
+                                        {% if log.activity_type == 'vote_submitted' %}
+                                            <span class="badge bg-success">Vote</span>
+                                        {% elif log.activity_type == 'login' %}
+                                            <span class="badge bg-info">Login</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ log.get_activity_type_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.election.title }}</td>
+                                    <td>{{ log.description }}</td>
+                                    <td><small><code>{{ log.ip_address }}</code></small></td>
+                                    <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No voting history found
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <p class="text-muted mt-3 small">
+                <i class="bi bi-info-circle"></i>
+                This log shows all your voting-related activities for transparency and security purposes.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
