@@ -16,6 +16,7 @@ if os.getenv("VERCEL"):
 		importlib.import_module("voting.migrations.0002_alter_customuser_managers_and_more")
 		importlib.import_module("voting.migrations.0003_auditlog_captchalog_notificationlog_otpverification_and_more")
 		importlib.import_module("voting.migrations.0004_alter_votelog_activity_type_alter_votelog_election")
+		importlib.import_module("voting.migrations.0005_election_allow_voting")
 	except ImportError:
 		pass
 	
