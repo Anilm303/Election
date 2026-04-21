@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 
 import dj_database_url
 
@@ -88,12 +89,14 @@ DATABASE_URL = (
     or os.getenv("POSTGRES_PRISMA_URL")
 )
 
+IS_COLLECTSTATIC_COMMAND = len(sys.argv) > 1 and sys.argv[1] == "collectstatic"
+
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=not DEBUG)
     }
 else:
-    if os.getenv("VERCEL"):
+    if os.getenv("VERCEL") and not IS_COLLECTSTATIC_COMMAND:
         raise RuntimeError(
             "DATABASE_URL is required on Vercel. Add a PostgreSQL database to the project and redeploy."
         )
