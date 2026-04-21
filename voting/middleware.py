@@ -77,10 +77,4 @@ class EnsureSchemaMiddleware:
     def __call__(self, request):
         if _is_vercel_sqlite_fallback():
             _ensure_schema_bootstrapped()
-        if os.getenv("VERCEL"):
-            try:
-                _ensure_superuser_from_env()
-            except OperationalError:
-                # If auth tables are not ready yet in a fresh runtime, next request will retry.
-                pass
         return self.get_response(request)
