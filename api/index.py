@@ -5,8 +5,48 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "evoting.settings")
 
 import django
 from django.core.management import call_command
+from django.db import connection
 
 django.setup()
+
+# Ensure missing columns exist (fallback if migrations don't run)
+def ensure_schema():
+	"""Ensure critical database schema exists"""
+	from django.db import settings as db_settings
+	from django.conf import settings
+	
+	try:
+		db_engine = settings.DATABASES['default']['ENGINE']
+		is_sqlite = 'sqlite' in db_engine
+		is_postgres = 'psycopg' in db_engine or 'postgresql' in db_engine
+		
+		with connection.cursor() as cursor:
+			column_exists = False
+			
+			if is_sqlite:
+				# For SQLite: use PRAGMA
+				cursor.execute("PRAGMA table_info(voting_election)")
+				columns = cursor.fetchall()
+				column_exists = any(col[1] == 'allow_voting' for col in columns)
+			elif is_postgres:
+				# For PostgreSQL: use information_schema
+				cursor.execute("""
+					SELECT EXISTS (
+						SELECT 1 FROM information_schema.columns 
+						WHERE table_name = 'voting_election' 
+						AND column_name = 'allow_voting'
+					)
+				""")
+				column_exists = cursor.fetchone()[0]
+			
+			if not column_exists:
+				try:
+					cursor.execute("ALTER TABLE voting_election ADD COLUMN allow_voting boolean DEFAULT true;")
+					print("[SCHEMA] Added allow_voting column to voting_election table")
+				except Exception as e:
+					print(f"[SCHEMA] Could not add column: {e}")
+	except Exception as e:
+		print(f"[SCHEMA] Check failed: {e}")
 
 # Always run migrations on Vercel
 if os.getenv("VERCEL"):
@@ -28,6 +68,12 @@ if os.getenv("VERCEL"):
 		print(f"[MIGRATION ERROR] {e}")
 		import traceback
 		traceback.print_exc()
+	
+	# Final safety check
+	try:
+		ensure_schema()
+	except Exception as e:
+		print(f"[SCHEMA ERROR] {e}")
 
 from django.core.wsgi import get_wsgi_application
 
