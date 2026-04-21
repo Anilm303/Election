@@ -3,12 +3,11 @@ import threading
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.db import OperationalError
 
 
 _SCHEMA_BOOTSTRAPPED = False
 _SCHEMA_BOOTSTRAP_LOCK = threading.Lock()
-_SUPERUSER_SYNCED = False
-_SUPERUSER_SYNC_LOCK = threading.Lock()
 
 
 def _is_vercel_sqlite_fallback() -> bool:
@@ -31,20 +30,10 @@ def _ensure_schema_bootstrapped() -> None:
         _SCHEMA_BOOTSTRAPPED = True
 
 
-def _ensure_superuser_synced_once() -> None:
-    global _SUPERUSER_SYNCED
-    if _SUPERUSER_SYNCED:
-        return
-    with _SUPERUSER_SYNC_LOCK:
-        if _SUPERUSER_SYNCED:
-            return
-        _SUPERUSER_SYNCED = _ensure_superuser_from_env()
-
-
 def _ensure_superuser_from_env() -> bool:
-    username = os.getenv("DJANGO_SUPERUSER_USERNAME")
-    email = os.getenv("DJANGO_SUPERUSER_EMAIL")
-    password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
+    username = (os.getenv("DJANGO_SUPERUSER_USERNAME") or "").strip()
+    email = (os.getenv("DJANGO_SUPERUSER_EMAIL") or "").strip()
+    password = (os.getenv("DJANGO_SUPERUSER_PASSWORD") or "").strip()
     if not username or not email or not password:
         return False
 
@@ -86,8 +75,12 @@ class EnsureSchemaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if os.getenv("VERCEL"):
-            _ensure_superuser_synced_once()
         if _is_vercel_sqlite_fallback():
             _ensure_schema_bootstrapped()
+        if os.getenv("VERCEL"):
+            try:
+                _ensure_superuser_from_env()
+            except OperationalError:
+                # If auth tables are not ready yet in a fresh runtime, next request will retry.
+                pass
         return self.get_response(request)
