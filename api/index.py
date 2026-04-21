@@ -1,4 +1,5 @@
 import os
+import importlib
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "evoting.settings")
 
@@ -14,7 +15,10 @@ if os.getenv("VERCEL") and not (
 	or os.getenv("POSTGRES_URL")
 	or os.getenv("POSTGRES_PRISMA_URL")
 ):
-	call_command("migrate", interactive=False, verbosity=0)
+	# Ensure migration files are part of the serverless bundle.
+	importlib.import_module("voting.migrations.0001_initial")
+	importlib.import_module("voting.migrations.0002_alter_customuser_managers_and_more")
+	call_command("migrate", interactive=False, verbosity=0, run_syncdb=True)
 
 from django.core.wsgi import get_wsgi_application
 
