@@ -38,6 +38,37 @@ from .utils import (
 )
 
 
+def _ensure_election_schema():
+    """Create the allow_voting column if the production database is missing it."""
+    from django.db import connection as db_connection
+
+    with db_connection.cursor() as cursor:
+        if db_connection.vendor == "postgresql":
+            cursor.execute(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'voting_election'
+                    AND column_name = 'allow_voting'
+                )
+                """
+            )
+            column_exists = cursor.fetchone()[0]
+            if not column_exists:
+                cursor.execute(
+                    "ALTER TABLE voting_election ADD COLUMN allow_voting boolean DEFAULT true;"
+                )
+        elif db_connection.vendor == "sqlite":
+            cursor.execute("PRAGMA table_info(voting_election)")
+            columns = cursor.fetchall()
+            column_exists = any(column[1] == "allow_voting" for column in columns)
+            if not column_exists:
+                cursor.execute(
+                    "ALTER TABLE voting_election ADD COLUMN allow_voting boolean DEFAULT 1;"
+                )
+
+
 def _ensure_sqlite_schema_for_vercel_fallback(error: OperationalError) -> bool:
     message = str(error).lower()
     is_missing_table = "no such table" in message
@@ -68,6 +99,11 @@ def get_user_ip(request):
 def home(request):
     """Home page with upcoming elections - public for all users"""
     now = timezone.now()
+    try:
+        _ensure_election_schema()
+    except Exception:
+        # If the column still cannot be created, fall back to the existing query path.
+        pass
     try:
         elections = Election.objects.filter(is_active=True, end_time__gte=now)
     except OperationalError as exc:
