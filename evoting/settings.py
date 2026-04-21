@@ -141,6 +141,9 @@ WHITENOISE_USE_FINDERS = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "voting.CustomUser"
+AUTHENTICATION_BACKENDS = [
+    "voting.auth_backends.UsernameOrEmailBackend",
+]
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "home"
 LOGIN_URL = "login"
