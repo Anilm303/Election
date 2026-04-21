@@ -22,9 +22,11 @@ if os.getenv("VERCEL"):
 	
 	# Run migrations on connected database
 	try:
-		call_command("migrate", interactive=False, verbosity=0)
+		call_command("migrate", interactive=False, verbosity=1)
 	except Exception as e:
-		print(f"Migration warning: {e}")
+		print(f"Migration error: {e}")
+		import traceback
+		traceback.print_exc()
 
 from django.core.wsgi import get_wsgi_application
 
