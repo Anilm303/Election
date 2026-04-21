@@ -1,7 +1,10 @@
+import os
+
 from django.contrib import messages
+from django.core.management import call_command
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -10,9 +13,29 @@ from .forms import RegisterForm, VoteForm
 from .models import Election, Vote
 
 
+def _ensure_sqlite_schema_for_vercel_fallback(error: OperationalError) -> bool:
+    message = str(error).lower()
+    is_missing_table = "no such table" in message
+    using_fallback = os.getenv("VERCEL") and not (
+        os.getenv("DATABASE_URL")
+        or os.getenv("POSTGRES_URL_NON_POOLING")
+        or os.getenv("POSTGRES_URL")
+        or os.getenv("POSTGRES_PRISMA_URL")
+    )
+    if is_missing_table and using_fallback:
+        call_command("migrate", interactive=False, verbosity=0, run_syncdb=True)
+        return True
+    return False
+
+
 def home(request):
     now = timezone.now()
-    elections = Election.objects.filter(is_active=True, end_time__gte=now)
+    try:
+        elections = Election.objects.filter(is_active=True, end_time__gte=now)
+    except OperationalError as exc:
+        if not _ensure_sqlite_schema_for_vercel_fallback(exc):
+            raise
+        elections = Election.objects.filter(is_active=True, end_time__gte=now)
     return render(request, "voting/home.html", {"elections": elections})
 
 
