@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import shutil
 
 import dj_database_url
 
@@ -93,10 +94,21 @@ if DATABASE_URL:
         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=not DEBUG)
     }
 else:
+    sqlite_name = BASE_DIR / "db.sqlite3"
+    if os.getenv("VERCEL"):
+        # Vercel serverless filesystem is read-only except /tmp.
+        sqlite_name = Path("/tmp/db.sqlite3")
+        source_sqlite = BASE_DIR / "db.sqlite3"
+        if source_sqlite.exists() and not sqlite_name.exists():
+            try:
+                shutil.copy2(source_sqlite, sqlite_name)
+            except OSError:
+                # If copy fails, Django will initialize a new SQLite DB at /tmp.
+                pass
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": sqlite_name,
         }
     }
 
