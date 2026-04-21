@@ -13,7 +13,7 @@ class UsernameOrEmailBackend(ModelBackend):
             if "@" in login_value:
                 user = user_model.objects.get(email__iexact=login_value)
             else:
-                user = user_model.objects.get(username=login_value)
+                user = user_model.objects.get(username__iexact=login_value)
         except user_model.DoesNotExist:
             return None
         except user_model.MultipleObjectsReturned:

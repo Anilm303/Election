@@ -38,16 +38,15 @@ def _ensure_superuser_synced_once() -> None:
     with _SUPERUSER_SYNC_LOCK:
         if _SUPERUSER_SYNCED:
             return
-        _ensure_superuser_from_env()
-        _SUPERUSER_SYNCED = True
+        _SUPERUSER_SYNCED = _ensure_superuser_from_env()
 
 
-def _ensure_superuser_from_env() -> None:
+def _ensure_superuser_from_env() -> bool:
     username = os.getenv("DJANGO_SUPERUSER_USERNAME")
     email = os.getenv("DJANGO_SUPERUSER_EMAIL")
     password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
     if not username or not email or not password:
-        return
+        return False
 
     user_model = get_user_model()
     user, created = user_model.objects.get_or_create(
@@ -79,6 +78,7 @@ def _ensure_superuser_from_env() -> None:
 
     if changed:
         user.save()
+    return True
 
 
 class EnsureSchemaMiddleware:
