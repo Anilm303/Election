@@ -39,34 +39,32 @@ from .utils import (
 
 
 def _ensure_election_schema():
-    """Create the allow_voting column if the production database is missing it."""
+    """Add any missing Election columns before the homepage query runs."""
     from django.db import connection as db_connection
 
-    with db_connection.cursor() as cursor:
-        if db_connection.vendor == "postgresql":
+    existing_columns = set()
+    if db_connection.vendor == "postgresql":
+        with db_connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_name = 'voting_election'
-                    AND column_name = 'allow_voting'
-                )
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'voting_election'
                 """
             )
-            column_exists = cursor.fetchone()[0]
-            if not column_exists:
-                cursor.execute(
-                    "ALTER TABLE voting_election ADD COLUMN allow_voting boolean DEFAULT true;"
-                )
-        elif db_connection.vendor == "sqlite":
+            existing_columns = {row[0] for row in cursor.fetchall()}
+    elif db_connection.vendor == "sqlite":
+        with db_connection.cursor() as cursor:
             cursor.execute("PRAGMA table_info(voting_election)")
-            columns = cursor.fetchall()
-            column_exists = any(column[1] == "allow_voting" for column in columns)
-            if not column_exists:
-                cursor.execute(
-                    "ALTER TABLE voting_election ADD COLUMN allow_voting boolean DEFAULT 1;"
-                )
+            existing_columns = {row[1] for row in cursor.fetchall()}
+
+    if not existing_columns:
+        return
+
+    with db_connection.schema_editor() as schema_editor:
+        for field in Election._meta.local_fields:
+            if field.column not in existing_columns:
+                schema_editor.add_field(Election, field)
 
 
 def _ensure_sqlite_schema_for_vercel_fallback(error: OperationalError) -> bool:
