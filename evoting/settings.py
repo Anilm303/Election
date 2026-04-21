@@ -248,33 +248,35 @@ LANGUAGES = [
 ]
 
 # ============ Logging Configuration ============
+# Use console-only logging for Vercel compatibility (read-only filesystem)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": BASE_DIR / "logs" / "evoting.log",
+    },
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} {message}",
+            "style": "{",
         },
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": "INFO",
+            "propagate": False,
         },
         "voting": {
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": False,
         },
     },
 }
-
-# Create logs directory if it doesn't exist
-LOGS_DIR = BASE_DIR / "logs"
-LOGS_DIR.mkdir(exist_ok=True)
 
 # ============ Session & Security ============
 SESSION_ENGINE = "django.contrib.sessions.backends.db"  # Store sessions in database
