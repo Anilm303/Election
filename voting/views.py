@@ -270,7 +270,6 @@ def login_view(request):
     return render(request, "voting/login.html", {"form": form})
 
 
-@login_required
 def verify_2fa(request):
     """Verify 2FA token during login"""
     user_id = request.session.get('pre_auth_user_id')
