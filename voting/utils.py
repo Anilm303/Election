@@ -226,9 +226,20 @@ def get_client_ip(request):
     """Get client IP address from request"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
+        ip = x_forwarded_for.split(',')[0].strip()
     else:
         ip = request.META.get('REMOTE_ADDR')
+
+    if not ip:
+        return None
+
+    ip = ip.strip()
+
+    if ip.startswith('[') and ']:' in ip:
+        ip = ip[1:ip.index(']')]
+    elif ip.count(':') == 1:
+        ip = ip.rsplit(':', 1)[0]
+
     return ip
 
 
