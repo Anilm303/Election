@@ -9,8 +9,8 @@
       <div class="d-flex align-items-center gap-3 mb-3">
         <div class="profile-avatar">{{ user.username|slice:':1'|upper }}</div>
         <div>
-          <h1 class="h5 mb-1">{{ user.get_full_name|default:user.username }}</h1>
-          <p class="text-muted mb-0">{{ user.email|default:"No email on file" }}</p>
+          <h1 class="h5 mb-1">Account</h1>
+          <p class="text-muted mb-0">Logged in user</p>
         </div>
       </div>
 
@@ -61,9 +61,9 @@
       {% if voter_profile %}
         <div class="mt-2">
           <div class="small text-uppercase text-muted mb-2">Voter Details</div>
-          <div class="small text-muted mb-1">Voter ID: <span class="text-dark fw-semibold">{{ voter_profile.unique_voter_id }}</span></div>
-          <div class="small text-muted mb-1">Gender: <span class="text-dark fw-semibold">{{ voter_profile.get_gender_display }}</span></div>
-          <div class="small text-muted mb-0">Contact: <span class="text-dark fw-semibold">{{ voter_profile.contact_number|default:"Not provided" }}</span></div>
+          <div class="small text-muted mb-1">Status: <span class="text-dark fw-semibold">{{ voter_verification_status|default:"Not completed" }}</span></div>
+          <div class="small text-muted mb-1">2FA: <span class="text-dark fw-semibold">{% if user.two_fa_enabled %}Enabled{% else %}Disabled{% endif %}</span></div>
+          <div class="small text-muted mb-0">Language: <span class="text-dark fw-semibold">{{ user.get_language_display|default:user.language }}</span></div>
         </div>
       {% endif %}
     </div>
@@ -73,7 +73,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
       <div>
         <p class="text-uppercase text-muted small mb-1">Voting dashboard</p>
-        <h2 class="h4 mb-0">Welcome back, {{ user.get_full_name|default:user.username }}</h2>
+        <h2 class="h4 mb-0">Welcome back</h2>
       </div>
       <span class="badge text-bg-dark align-self-start align-self-md-center">Dashboard</span>
     </div>
@@ -105,8 +105,36 @@
     </div>
 
     {% if elections %}
-      <div class="table-responsive">
-        <table class="table align-middle dashboard-table mb-0">
+      <div class="election-cards">
+        {% for election in elections %}
+          <article class="election-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div>
+                  <h3 class="h6 mb-1">{{ election.title }}</h3>
+                  <p class="small text-muted mb-0">{{ election.description|default:"No description available" }}</p>
+                </div>
+                {% if election.id in voted_election_ids %}
+                  <span class="badge text-bg-success">Voted</span>
+                {% else %}
+                  <span class="badge text-bg-warning">Pending</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="election-card__footer">
+              <div class="small text-muted">Manage election activity</div>
+              <div class="election-card__actions">
+                <a href="{% url 'results' election.id %}" class="btn btn-outline-secondary btn-sm">Results</a>
+                {% if election.id not in voted_election_ids %}
+                  <a href="{% url 'vote' election.id %}" class="btn btn-primary btn-sm">Vote</a>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      <div class="table-responsive election-table mt-1 d-none d-md-block">
+        <table class="table align-middle mb-0">
           <thead>
             <tr>
               <th>Election</th>
