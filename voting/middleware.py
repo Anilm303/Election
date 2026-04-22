@@ -19,6 +19,20 @@ def _is_vercel_sqlite_fallback() -> bool:
     )
 
 
+def _is_schema_missing() -> bool:
+    if not os.getenv("VERCEL"):
+        return False
+
+    try:
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            tables = connection.introspection.table_names(cursor)
+        return "auth_user" not in tables
+    except Exception:
+        return True
+
+
 def _ensure_schema_bootstrapped() -> None:
     global _SCHEMA_BOOTSTRAPPED
     if _SCHEMA_BOOTSTRAPPED:
@@ -75,6 +89,6 @@ class EnsureSchemaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if _is_vercel_sqlite_fallback():
+        if _is_vercel_sqlite_fallback() or _is_schema_missing():
             _ensure_schema_bootstrapped()
         return self.get_response(request)
