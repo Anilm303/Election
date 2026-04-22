@@ -193,15 +193,15 @@ class VoteForm(forms.Form):
     candidate = forms.ModelChoiceField(
         queryset=Candidate.objects.none(),
         empty_label="Select a candidate",
-        widget=forms.RadioSelect(attrs={
-            'class': 'form-check-input'
-        })
+        widget=forms.RadioSelect
     )
 
     def __init__(self, *args, **kwargs):
         election = kwargs.pop("election")
         super().__init__(*args, **kwargs)
-        self.fields["candidate"].queryset = election.candidates.all()
+        candidate_field = self.fields["candidate"]
+        candidate_field.queryset = election.candidates.all()
+        candidate_field.label_from_instance = lambda candidate: candidate.name
 
 
 class ElectionForm(forms.Form):
