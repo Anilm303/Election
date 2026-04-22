@@ -3,46 +3,147 @@
 {% block title %}Dashboard | Electronic Voting{% endblock %}
 
 {% block content %}
-<div class="card card-soft p-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Welcome, {{ user.username }}</h1>
-    <span class="badge text-bg-dark">Dashboard</span>
-  </div>
+<div class="dashboard-shell">
+  <aside class="dashboard-sidebar">
+    <div class="card card-soft profile-panel p-4 h-100">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="profile-avatar">{{ user.username|slice:':1'|upper }}</div>
+        <div>
+          <h1 class="h5 mb-1">{{ user.get_full_name|default:user.username }}</h1>
+          <p class="text-muted mb-0">{{ user.email|default:"No email on file" }}</p>
+        </div>
+      </div>
 
-  {% if elections %}
-    <div class="table-responsive">
-      <table class="table align-middle">
-        <thead>
-          <tr>
-            <th>Election</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for election in elections %}
-            <tr>
-              <td>{{ election.title }}</td>
-              <td>
-                {% if election.id in voted_election_ids %}
-                  <span class="badge text-bg-success">Voted</span>
-                {% else %}
-                  <span class="badge text-bg-warning">Pending</span>
-                {% endif %}
-              </td>
-              <td>
-                <a href="{% url 'results' election.id %}" class="btn btn-outline-secondary btn-sm">Results</a>
-                {% if election.id not in voted_election_ids %}
-                  <a href="{% url 'vote' election.id %}" class="btn btn-primary btn-sm">Vote</a>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="profile-stat mb-3">
+        <div class="small text-uppercase text-muted mb-1">Account Status</div>
+        <div class="fw-semibold text-dark">
+          {% if user.is_active %}
+            Active user
+          {% else %}
+            Inactive account
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="profile-stat mb-3">
+        <div class="small text-uppercase text-muted mb-1">Verification</div>
+        <div class="fw-semibold text-dark">
+          {% if voter_verification_status == 'verified' %}
+            <span class="badge text-bg-success">Verified</span>
+          {% elif voter_verification_status == 'pending' %}
+            <span class="badge text-bg-warning">Pending</span>
+          {% elif voter_verification_status == 'rejected' %}
+            <span class="badge text-bg-danger">Rejected</span>
+          {% elif voter_verification_status == 'suspended' %}
+            <span class="badge text-bg-secondary">Suspended</span>
+          {% else %}
+            <span class="badge text-bg-light text-dark">Profile not completed</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="profile-stat mb-3">
+        <div class="small text-uppercase text-muted mb-1">Security</div>
+        <div class="fw-semibold text-dark">
+          {% if user.two_fa_enabled %}
+            2FA enabled
+          {% else %}
+            2FA not enabled
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="profile-stat mb-3">
+        <div class="small text-uppercase text-muted mb-1">Language</div>
+        <div class="fw-semibold text-dark">{{ user.get_language_display|default:user.language }}</div>
+      </div>
+
+      {% if voter_profile %}
+        <div class="mt-2">
+          <div class="small text-uppercase text-muted mb-2">Voter Details</div>
+          <div class="small text-muted mb-1">Voter ID: <span class="text-dark fw-semibold">{{ voter_profile.unique_voter_id }}</span></div>
+          <div class="small text-muted mb-1">Gender: <span class="text-dark fw-semibold">{{ voter_profile.get_gender_display }}</span></div>
+          <div class="small text-muted mb-0">Contact: <span class="text-dark fw-semibold">{{ voter_profile.contact_number|default:"Not provided" }}</span></div>
+        </div>
+      {% endif %}
     </div>
-  {% else %}
-    <p class="text-muted mb-0">No active elections found.</p>
-  {% endif %}
+  </aside>
+
+  <section class="card card-soft p-4 p-md-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div>
+        <p class="text-uppercase text-muted small mb-1">Voting dashboard</p>
+        <h2 class="h4 mb-0">Welcome back, {{ user.get_full_name|default:user.username }}</h2>
+      </div>
+      <span class="badge text-bg-dark align-self-start align-self-md-center">Dashboard</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="profile-stat h-100">
+          <div class="small text-uppercase text-muted mb-1">Elections</div>
+          <div class="h4 mb-0">{{ elections|length }}</div>
+          <div class="small text-muted">Available elections on your account</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="profile-stat h-100">
+          <div class="small text-uppercase text-muted mb-1">Votes Cast</div>
+          <div class="h4 mb-0">{{ voted_election_ids|length }}</div>
+          <div class="small text-muted">Completed elections</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="profile-stat h-100">
+          <div class="small text-uppercase text-muted mb-1">Profile</div>
+          <div class="h4 mb-0">
+            {% if voter_profile %}Complete{% else %}Missing{% endif %}
+          </div>
+          <div class="small text-muted">Your voter profile status</div>
+        </div>
+      </div>
+    </div>
+
+    {% if elections %}
+      <div class="table-responsive">
+        <table class="table align-middle dashboard-table mb-0">
+          <thead>
+            <tr>
+              <th>Election</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for election in elections %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ election.title }}</div>
+                  <div class="small text-muted">{{ election.description|default:"No description available" }}</div>
+                </td>
+                <td>
+                  {% if election.id in voted_election_ids %}
+                    <span class="badge text-bg-success">Voted</span>
+                  {% else %}
+                    <span class="badge text-bg-warning">Pending</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm flex-wrap" role="group">
+                    <a href="{% url 'results' election.id %}" class="btn btn-outline-secondary">Results</a>
+                    {% if election.id not in voted_election_ids %}
+                      <a href="{% url 'vote' election.id %}" class="btn btn-primary">Vote</a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-light border mb-0">No active elections found.</div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

@@ -312,12 +312,14 @@ def dashboard(request):
         voter_profile = request.user.voter_profile
         verification_status = voter_profile.verification_status
     except VoterProfile.DoesNotExist:
+        voter_profile = None
         verification_status = None
     
     context = {
         "elections": elections,
         "voted_election_ids": voted_election_ids,
         "voter_verification_status": verification_status,
+        "voter_profile": voter_profile,
     }
     return render(request, "voting/dashboard.html", context)
 
