@@ -6,6 +6,36 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def add_allow_voting_column_if_missing(apps, schema_editor):
+    election_model = apps.get_model('voting', 'Election')
+    column_name = 'allow_voting'
+    connection = schema_editor.connection
+
+    existing_columns = set()
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = %s
+                """,
+                [election_model._meta.db_table],
+            )
+            existing_columns = {row[0] for row in cursor.fetchall()}
+    elif connection.vendor == 'sqlite':
+        with connection.cursor() as cursor:
+            cursor.execute(f'PRAGMA table_info({election_model._meta.db_table})')
+            existing_columns = {row[1] for row in cursor.fetchall()}
+
+    if column_name in existing_columns:
+        return
+
+    field = models.BooleanField(default=True)
+    field.set_attributes_from_name(column_name)
+    schema_editor.add_field(election_model, field)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -244,10 +274,17 @@ class Migration(migrations.Migration):
             name='updated_at',
             field=models.DateTimeField(auto_now=True),
         ),
-        migrations.AddField(
-            model_name='election',
-            name='allow_voting',
-            field=models.BooleanField(default=True),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(add_allow_voting_column_if_missing, migrations.RunPython.noop),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='election',
+                    name='allow_voting',
+                    field=models.BooleanField(default=True),
+                ),
+            ],
         ),
         migrations.AddField(
             model_name='election',

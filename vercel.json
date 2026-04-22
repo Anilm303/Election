@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "python manage.py collectstatic --noinput",
+  "buildCommand": "python manage.py migrate --noinput --fake-initial && python manage.py collectstatic --noinput",
   "routes": [
     {
       "src": "/(.*)",
